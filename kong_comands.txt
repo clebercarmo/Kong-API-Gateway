@@ -1,0 +1,61 @@
+REGISTRAR UM SERVIÇO
+
+curl -i -X POST \
+--url http://localhost:8001/services/ \
+--data 'name=testApi' \
+--data 'url=http://api:5000'
+
+
+REGISTRAR ROTA AO SERVIÇO
+
+curl -i -X POST \
+--url http://localhost:8001/services/testApi/routes \
+--data 'hosts[]=localhost' \
+--data 'paths[]=/api/v1/test1' \
+--data 'strip_path=false' \
+--data 'methods[]=GET'
+
+HABILITAR O PLUGIN DA API KEY A UM SERVIÇO
+curl -X POST http://localhost:8001/services/testApi/plugins \
+--data "name=key-auth"
+
+
+ATRIBUIR UMA API KEY A UM CONSUMER
+curl -X POST http://localhost:8001/consumers/consumer1/key-auth --data ""
+
+OBS: DATA EM BRANCO O KONG AUTOCRIA A APIKEY
+
+FORMA DE PASSAR A KEY PARA O REQUEST
+
+curl -i -X GET --url http://localhost:8000/api/v1/test2 --header 'Host: localhost' --header 'apikey: M1PyCiEee7QbI44FWC24G4WK7Bb4vZgm'
+
+CONSULTA UMA API KEY DE UM CONSUMER
+http://localhost:8001/consumers/consumer1/key-auth
+
+
+ADICIONAR UMA REGRA DE LIMITE A UM CONSUMER
+
+curl -X POST http://localhost:8001/consumers/consumer1/plugins \
+    --data "name=rate-limiting"  \
+    --data "config.second=5" \
+    --data "config.minute=5" \
+    --data "config.hour=100" \
+    --data "config.policy=local"
+
+ADICIONAR UMA REGRA DE LIMITE A UM SERVICO (POSSUI N ROTAS)
+
+curl -X POST http://localhost:8001/services/SERVICE_NAME|SERVICE_ID/plugins \
+    --data "name=rate-limiting"  \
+    --data "config.second=5" \
+    --data "config.hour=10000" \
+    --data "config.policy=local"
+
+
+
+ADICIONAR UMA REGRA DE SERVILO A UMA ROTA
+
+curl -X POST http://localhost:8001/routes/ROUTE_NAME|ROUTE_ID/plugins \
+  --data "name=rate-limiting"  \
+    --data "config.second=5" \
+    --data "config.hour=10000" \
+    --data "config.policy=local"
